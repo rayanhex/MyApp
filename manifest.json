@@ -1,0 +1,34 @@
+{
+    "manifest_version": 3,
+    "name": "FlipFinder",
+    "version": "1.0.0",
+    "description": "Find profitable items to flip from Facebook Marketplace to eBay",
+    "permissions": [
+      "activeTab",
+      "scripting"
+    ],
+    "host_permissions": [
+      "https://www.facebook.com/*",
+      "https://api.ebay.com/*",
+      "https://api.x.ai/*"
+    ],
+    "content_scripts": [
+      {
+        "matches": ["https://www.facebook.com/marketplace/*"],
+        "js": ["content.js"],
+        "css": ["styles.css"]
+      }
+    ],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "web_accessible_resources": [
+      {
+        "resources": ["popup.html"],
+        "matches": ["<all_urls>"]
+      }
+    ],
+    "action": {
+      "default_title": "FlipFinder - Automatic Currency Detection"
+    }
+  }

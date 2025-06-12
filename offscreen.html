@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>FlipFinder OCR Processor</title>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+    <script>
+        let ocrWorker = null;
+        let isInitialized = false;
+
+        // Initialize Tesseract worker
+        async function initializeOCR() {
+            if (!ocrWorker && !isInitialized) {
+                isInitialized = true;
+                try {
+                    console.log('Initializing Tesseract worker...');
+                    ocrWorker = await Tesseract.createWorker();
+                    console.log('OCR worker initialized successfully');
+                } catch (error) {
+                    console.error('Failed to initialize OCR worker:', error);
+                    isInitialized = false;
+                    throw error;
+                }
+            }
+            return ocrWorker;
+        }
+
+        // Handle messages from background script
+        chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+            console.log('Offscreen received message:', message.action);
+            
+            if (message.action === 'performOCR') {
+                try {
+                    console.log('Starting OCR processing in offscreen document');
+                    
+                    // Initialize worker if needed
+                    const worker = await initializeOCR();
+                    
+                    if (!worker) {
+                        throw new Error('Failed to initialize OCR worker');
+                    }
+                    
+                    // Perform OCR on the screenshot
+                    console.log('Starting text recognition...');
+                    const { data: { text } } = await worker.recognize(message.screenshot, {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+                            }
+                        }
+                    });
+                    
+                    console.log('OCR completed, extracted text:', text);
+                    
+                    // Send result back to background script
+                    chrome.runtime.sendMessage({
+                        action: 'ocrComplete',
+                        requestId: message.requestId,
+                        text: text
+                    });
+                    
+                } catch (error) {
+                    console.error('OCR Error in offscreen:', error);
+                    
+                    // Send error back to background script
+                    chrome.runtime.sendMessage({
+                        action: 'ocrError',
+                        requestId: message.requestId,
+                        error: error.message
+                    });
+                }
+            }
+        });
+
+        // Cleanup worker when document is about to unload
+        window.addEventListener('beforeunload', async () => {
+            if (ocrWorker) {
+                try {
+                    await ocrWorker.terminate();
+                    ocrWorker = null;
+                } catch (error) {
+                    console.error('Error terminating OCR worker:', error);
+                }
+            }
+        });
+
+        // Signal that offscreen document is ready
+        window.addEventListener('load', () => {
+            console.log('FlipFinder offscreen document loaded and ready');
+            
+            // Notify background script that we're ready
+            chrome.runtime.sendMessage({
+                action: 'offscreenReady'
+            }).catch(error => {
+                console.log('Background script not ready yet, will retry...');
+            });
+        });
+    </script>
+</body>
+</html>
