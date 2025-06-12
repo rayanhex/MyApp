@@ -5,25 +5,25 @@
     "description": "Chrome extension to find profitable items to flip from Facebook Marketplace to eBay",
     "main": "background.js",
     "scripts": {
-        "build": "webpack --mode=production",
-        "dev": "webpack --mode=development --watch",
-        "package": "zip -r flipfinder-extension.zip . -x 'node_modules/*' '.git/*' '*.zip'"
+      "build": "node build.js",
+      "dev": "npm run build && echo '🚀 Extension ready for development'",
+      "clean": "rm -f background.js",
+      "setup": "cp .env.example .env && echo '📝 Created .env file - please add your API keys'",
+      "package": "npm run build && zip -r flipfinder-extension.zip . -x 'node_modules/*' '.git/*' '*.zip' '.env' 'background.js'"
     },
     "dependencies": {
-        "tesseract.js": "^4.1.4"
+      "tesseract.js": "^4.1.1"
     },
     "devDependencies": {
-        "copy-webpack-plugin": "^11.0.0",
-        "webpack": "^5.88.0",
-        "webpack-cli": "^5.1.0"
+      "dotenv": "^16.0.0"
     },
     "keywords": [
-        "chrome-extension",
-        "flipping",
-        "arbitrage",
-        "facebook-marketplace",
-        "ebay"
+      "chrome-extension",
+      "flipping",
+      "arbitrage",
+      "facebook-marketplace",
+      "ebay"
     ],
     "author": "FlipFinder Team",
     "license": "MIT"
-}
+  }
